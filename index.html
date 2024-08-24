@@ -1,0 +1,146 @@
+
+<!DOCTYPE html>
+<head>
+<title>Pyramid</title>
+<script src="three.min.js"></script>
+<script src="KeyboardState.js"></script>
+
+<!-- Modified from the MeshFaceMaterial.html example in our textbook 
+		(Introduction to Computer Graphics) by David J. Eck -->
+
+<script>
+
+	/* Name: Katie Pimentel
+	* Last worked on: August 24th, 2024
+	*/
+	var scene, camera, renderer; // Three.js rendering basics.
+	var canvas; // The canvas on which the image is rendered.
+	var numPyramids = 100; //for number of pyramids on plane
+	var keyboard = new KeyboardState(); // object for keyboard controls
+
+	function makePyramid(cx, cy, cz, size) {
+		var pyramidGeom = new THREE.Geometry(size, numPyramids);
+
+		pyramidGeom.vertices = [  // array of Vector3 giving vertex coordinates
+				new THREE.Vector3(1, 1, 0),  // vertex number 0
+				new THREE.Vector3(1, -1, 0),  // vertex number 1
+				new THREE.Vector3(-1, -1, 0),  // vertex number 2
+				new THREE.Vector3(-1, 1, 0),  // vertex number 3
+				new THREE.Vector3(0, 0, 1)   // vertex number 4
+		];
+
+		pyramidGeom.faces = [  // array of Face3 giving the triangular faces
+				new THREE.Face3(0, 1, 2),  // one half of the bottom face
+				new THREE.Face3(2, 3, 0),  // second half of the bottom face
+				new THREE.Face3(0, 3, 4),  // remaining faces are the four sides
+				new THREE.Face3(3, 2, 4),
+				new THREE.Face3(2, 1, 4),
+				new THREE.Face3(1, 0, 4)
+		];
+
+		// compute normals so we know which way is facing "out"
+		pyramidGeom.computeFaceNormals();
+
+		// map the faces to materials
+		pyramidGeom.faces[0].materialIndex = 0;
+		for (var i = 1; i <= 5; i++) {
+				pyramidGeom.faces[i].materialIndex = i-1;
+		}
+
+		// creates a material for the pyramid that is "matte" not "shiny".
+		var pyramidFaceMaterial = [
+				new THREE.MeshLambertMaterial( { color: 0xf231f2, flatShading: true } ),
+				new THREE.MeshLambertMaterial( { color: 0x99ffff, flatShading: true } ),
+				new THREE.MeshLambertMaterial( { color: 0xff99ff, flatShading: true } ),
+				new THREE.MeshLambertMaterial( { color: 0xffff99, flatShading: true } ),
+				new THREE.MeshLambertMaterial( { color: 0xff9999, flatShading: true } )
+		];
+
+		// create the pyramid using the geometry and materials we've set up.
+		pyramid = new THREE.Mesh(pyramidGeom, pyramidFaceMaterial);
+		pyramid.position.set(cx,cy,cz); // setting x, y and z points for pyramid
+		scene.add(pyramid); // adding pyramid to scene
+	}
+
+	function createWorld() {
+			renderer.setClearColor(0); // set background color (0, or 0x000000, is black).
+			scene = new THREE.Scene(); // create a new scene which we can add objects to.
+
+			camera = new THREE.PerspectiveCamera(20, 600 / 300, 1, 100);
+			camera.position.z = 2; // update the camera position for a better view
+			camera.rotation.x = Math.PI / 2; // rotating the camera
+
+			// create some lights and add them to the scene
+			scene.add(new THREE.DirectionalLight(0xffffff, 0.4));
+			var viewpointLight = new THREE.DirectionalLight(0xffffff, 0.8);
+			viewpointLight.position.set(0, 0, 1); // shines down the z-axis
+			scene.add(viewpointLight);
+
+			// adding the plane to the scene
+			var geometry = new THREE.PlaneGeometry(50, 50);
+			var material = new THREE.MeshBasicMaterial({ color: 0xffff00, side: THREE.DoubleSide });
+			var plane = new THREE.Mesh(geometry, material);
+			scene.add(plane);
+
+			// loop to create several pyramids on the plane
+			for (var i = 0; i < numPyramids; i++) {
+				var cx = Math.random() * 40 - 20; // x position between -20 and 20 
+				var cy = Math.random() * 40 - 20; // y position between -20 and 20
+				var cz = 0; // z position is 0
+				var size = Math.ceil(Math.random()*10)+10; // size of pyramids between 
+				makePyramid(cx, cy, cz, size); // add pyramids to scene
+			}
+		}
+		// for keyboard controls
+	  function update() {
+			keyboard.update();
+			
+			if ( keyboard.pressed("W") ) {
+					camera.position.y += 0.09; // forward
+			}
+			if ( keyboard.pressed("A") ) {
+					camera.position.x -= 0.09; // back
+			}
+			if ( keyboard.pressed("S") ) {
+					camera.position.y -= 0.09; // down
+			}
+			if ( keyboard.pressed("D") ) {
+					camera.position.x += 0.09; // right
+			}
+	}
+
+		// render the scene.
+		function render() {
+			requestAnimationFrame(render);
+			update();
+			renderer.render(scene, camera);
+		}
+
+		//----------------------------------------------------------------------------------
+
+		// The init() function is called by the onload event when the document has loaded.
+		function init() {
+				try {
+						canvas = document.getElementById("glcanvas");
+						renderer = new THREE.WebGLRenderer( { canvas: canvas, antialias: true} );
+				}
+				catch (e) {
+						document.getElementById("canvas-holder").innerHTML = "<h3><b>WebGL is not available.</b><h3>";
+						return;
+				}
+
+				// create world and render scene
+				createWorld();
+				render();
+		}
+
+</script>
+
+</head>
+<body onload="init()">
+<div id="canvas-holder">
+	<p>Click window to activate. Use WASD to look around the plane.</p>
+		<canvas id="glcanvas" width="600" height="300"></canvas>
+</div>
+</body>
+</html>
